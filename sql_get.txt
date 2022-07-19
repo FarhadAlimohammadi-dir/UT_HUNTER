@@ -1,0 +1,10 @@
+http://192.168.134.129/dvwa/vulnerabilities/sqli/
+
+http://192.168.134.129/dvwa/vulnerabilities/brute/
+
+http://192.168.134.129/dvwa/vulnerabilities/sqli/
+
+http://192.168.134.129/dvwa/vulnerabilities/brute/
+
+http://192.168.134.129/dvwa/vulnerabilities/sqli/
+
