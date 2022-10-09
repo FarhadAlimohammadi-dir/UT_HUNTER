@@ -42,6 +42,10 @@ user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 4: uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -use_header=yes -proxy=http | in this case, you must put the proxies in proxy.txt file
  
 
+ 
+  
+
+ 
 Todo:
 
 Parsing Mode  ✅
