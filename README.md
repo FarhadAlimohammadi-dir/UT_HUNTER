@@ -24,7 +24,10 @@ Parameters = -url , -proxy , -leecher_depth , -use_header , -bug_type
 
 # Examples:
 
-1: uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -leecher_depth=4
+
+1: ```text
+uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -leecher_depth=4
+```
  
 2: uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql  | in this case you need to add urls in leeckedUrls.txt file otherwise you will faced wit an error
  
