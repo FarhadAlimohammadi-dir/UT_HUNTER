@@ -1,7 +1,7 @@
 from log import *
 
 
-
+# This function for save a list to a file
 def saveListToFile(filename: str,list: list , encoding: str):
 
     Log.info('Saving list to file ' + filename)
@@ -11,6 +11,7 @@ def saveListToFile(filename: str,list: list , encoding: str):
     f.close()
 
 
+# loading a list from a file
 def loadListFromFile(filename: str , encoding: str):
 
     l = []
@@ -21,7 +22,7 @@ def loadListFromFile(filename: str , encoding: str):
     f.close()
     return l
 
-
+# remove duplicate lines from a file
 def removeDUPfromFile(filename: str , encoding: str):
     try:
         list = []

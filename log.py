@@ -1,6 +1,7 @@
 from datetime import datetime
 from  colors import *
 
+# Log class for console when we are going to print results
 
 class Log:
 

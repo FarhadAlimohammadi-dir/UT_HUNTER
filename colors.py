@@ -1,5 +1,7 @@
 class bcolors:
 
+    # Color class for using colored text in console
+
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'

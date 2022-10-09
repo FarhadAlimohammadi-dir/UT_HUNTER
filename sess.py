@@ -2,19 +2,26 @@ import random
 import requests
 from colors import bcolors
 
-# Proxy Types:
-#       1-HTTP 2-Socks4 3-Socks5 4-ProxyLess | http , socks4 , socks5 , proxyless
 
+# This is our session class for sending requests
+# in other classes we just used this class
+# here you can see the process of it
+
+
+# Proxy Types:
+#       1-HTTP 2-Socks4 3-Socks5 4-ProxyLess || http , socks4 , socks5 , proxyless
 
 
 def GetProxyAuth(proxy_type):
 
+    # getting random AUTH (ip:port:user:pass) proxy form a file
     lines = open('proxy.txt').read().splitlines()
-    proxies_file = random.choice(lines)
     proxies = {}
-    a = random.choice(proxies_file)
+    a = random.choice(lines)
     b = str(a).split(':')
     c = b[2] + ':' + b[3] + '@' + b[0] + ':' + b[1]
+
+    # by checking the proxy type, it will add proxy to proxies json variable
 
     if proxy_type == 1:
         proxies = {
@@ -37,9 +44,9 @@ def GetProxyAuth(proxy_type):
     return proxies
 
 
-
-
 def GetProxyNormal(proxy_type):
+
+    # it will get random a normal proxy (ip:port) from proxy.txt file
     lines = open('proxy.txt').read().splitlines()
     proxies_file = random.choice(lines)
     if proxy_type == 1:
@@ -66,8 +73,11 @@ def GetProxyNormal(proxy_type):
     return proxies
 
 
+
 def detectAndReturnProxy(proxy_type):
 
+    # detecting type of proxy (normal or auth proxy)
+    # and get a random proxy by calling two above function as the proxy type
 
     lines = open('proxy.txt').read().splitlines()
     proxy = random.choice(lines).strip()
@@ -76,7 +86,7 @@ def detectAndReturnProxy(proxy_type):
 
     if len == 2:
         proxies = GetProxyNormal(proxy_type)
-    elif len ==4:
+    elif len == 4:
         proxies = GetProxyAuth(proxy_type)
 
     else:
@@ -86,7 +96,7 @@ def detectAndReturnProxy(proxy_type):
     return proxies
 
 
-
+# make a session by header
 def sess(headers):
     s = requests.session()
 
@@ -96,7 +106,8 @@ def sess(headers):
     return s
 
 
-def sessProxy(headers , proxy_type):
+# make a session by header and proxy type
+def sessProxy(headers, proxy_type):
     s = requests.session()
 
     if headers != None:
