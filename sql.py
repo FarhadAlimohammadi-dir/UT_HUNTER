@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
 from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
+import threading
 
 disable_warnings(InsecureRequestWarning)
 
@@ -10,6 +11,8 @@ from engine import *
 from sess import *
 from log import *
 
+
+lock = threading.Lock()
 # this is our sql errors
 errors = [
     "error executing",
@@ -208,7 +211,7 @@ class sql:
         new_query = "&".join(["{}{}".format(query, self.payload) for query in queries])
         parsed = parsed._replace(query=new_query)
         url = urlunparse(parsed)
-
+        lock.acquire()
         Log.warning("Found link GET Method: " + url)
 
         # skip mailto and tel protocols
@@ -220,9 +223,11 @@ class sql:
                     file = open("sql_get_params.txt", "a+")
                     file.write(str(req.url) + "\n")
                     file.close()
+                    lock.release()
 
                 else:
                     Log.info(f"No bug here: {url}")
+                    lock.release()
             except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError or urllib3.exceptions.ProtocolError:
                 self.sql_get_param(url)
         else:

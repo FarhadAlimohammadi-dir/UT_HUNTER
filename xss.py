@@ -11,7 +11,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
 
 disable_warnings(InsecureRequestWarning)
-
+lock = threading.Lock
 
 # Define XSS Class
 class xss:
@@ -50,6 +50,8 @@ class xss:
                 # Check each form if using GET mehtod or not
                 if form["method"].lower().strip() == "get":
 
+                    lock.acquire()
+
                     # Logging the URL and params in console ...
                     Log.warning("Url using GET method XSS: " + urljoin(url, action))
                     Log.info("Getting inputs ...")
@@ -85,14 +87,18 @@ class xss:
                         file.write(str(urljoin(url, action)) + "\n\n")
                         file.close()
                         Log.high("GET data: " + str(keys))
+                        lock.release()
                     else:
                         Log.info("Page using GET_FORM method but XSS vulnerability not found")
+                        lock.release()
         except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError:
             self.xss_get_form(url)
 
     def xss_get_param(self, url: str):
 
         try:
+
+            lock.acquire()
 
             # Checking websites get parameters not form ones, like search query in url
             # Example : Google.com/s=<Payload>
@@ -139,9 +145,11 @@ class xss:
 
                     file.write(url_decoded + "\n")
                     file.close()
+                    lock.release()
 
                 else:
                     Log.info("Page using GET method but XSS vulnerability not found")
+                    lock.release()
             else:
                 pass
 
@@ -154,6 +162,7 @@ class xss:
 
         try:
             sess = self.sess()
+            lock.acquire()
 
             # First of all we need to send a get method for getting all inputs such as forms
             txt = sess.get(url).text
@@ -252,10 +261,12 @@ class xss:
                                         key['name']) or 'submit' in str(key['name']):
                                         keys.update({key["name"]: key["value"]})
                                         Log.info("Form key name: " + key["name"] + " value: " + key["value"])
+                                        lock.release()
 
                                     else:
                                         Log.info("Form key name: " + key["name"] + " value: " + self.payload)
                                         keys.update({key["name"]: self.payload})
+                                        lock.release()
 
                                 except:
 
@@ -263,9 +274,11 @@ class xss:
 
                                     Log.info("Form key name: " + key["name"] + " value: " + self.payload)
                                     keys.update({key["name"]: self.payload})
+                                    lock.release()
 
                         except Exception as e:
                             Log.info("Internal error: " + str(e))
+                            lock.release()
 
                     Log.info("Sending XSS payload (POST) method ..")
 
@@ -279,6 +292,7 @@ class xss:
                         file.write(str(urljoin(url, action)) + "\n" + str(keys) + '\n\n')
                         file.close()
                         Log.high("Post data: " + str(keys))
+                        lock.release()
 
                     # Sometimes we need to refresh the form page to see our actions
                     else:
@@ -290,9 +304,11 @@ class xss:
                             file.write(str(urljoin(url, action)) + "\n" + str(keys) + '\n\n')
                             file.close()
                             Log.high("Post data: " + str(keys))
+                            lock.release()
                         else:
 
                             Log.info("Page using POST method but XSS vulnerability not found")
+                            lock.release()
 
         except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError:
             self.xss_post(url)
