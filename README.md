@@ -25,13 +25,26 @@ Parameters = -url , -proxy , -leecher_depth , -use_header , -bug_type
 # Examples:
 
 
-1: ```text
+1: 
+
+```text
 uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -leecher_depth=4
 ```
+  
+2: 
+
+```text
+uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql
+ ```
+ in this case you need to add urls in leeckedUrls.txt file otherwise you will faced wit an error
  
-2: uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql  | in this case you need to add urls in leeckedUrls.txt file otherwise you will faced wit an error
  
-3: uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -use_header=yes | in this case you need put headers (netscape format) in headers.txt file
+3: 
+```text
+uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -use_header=yes
+```
+
+in this case you need put headers (netscape format) in headers.txt file
 
 be aware you can use cookies as headers as well and here one example of headers:
 
@@ -42,8 +55,14 @@ referer: https://www.google.com/
 user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36
 ```
  
-4: uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -use_header=yes -proxy=http | in this case, you must put the proxies in proxy.txt file
  
+ 
+4: 
+```text
+uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -use_header=yes -proxy=http 
+```
+
+in this case, you must put the proxies in proxy.txt file
  
  
  
