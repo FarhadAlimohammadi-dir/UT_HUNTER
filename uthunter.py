@@ -18,7 +18,7 @@ Parameters = -url , -proxy , -leecher_depth , -use_header , -bug_type
 
 [1] -url => required
 [2] -proxy => default is proxyless | if need use proxy, put proxies in proxies.txt and pass one of http socks4 socks5
-[3] -leecher_depth => default is 0 | if needed to use leecher, pass an integer to set depth for leeching from your url
+[3] -leecher_depth => default is 0 - for this you need to pur your custom urls in leechedUlrs.txt file | if needed to use leecher, pass an integer to set depth for leeching from your url
 [4] -use_header => default is no | if needed to use header, put headers as netscape format (google chrome inspector headers)
  in headers.txt and pass yes
 [5]-bug_type => required and choices are [lfi,xss,sql]
@@ -40,9 +40,9 @@ elif 'socks5' in str(opt.proxy).lower():
 else:
     proxyType = 4
 
+eng = engine(use_header)
 
 if opt.leecher_depth != 0:
-    eng = engine(use_header)
     eng.crawl(opt.url, proxyType, use_header, opt.leecher_depth)
 
 else:
@@ -50,7 +50,6 @@ else:
 
 if 'xss' in opt.bug_type:
     Log.info('Starting XSS Get Form ......')
-    eng = engine(use_header)
     eng.startXSS_get_form(proxyType)
     Log.info('XSS Get Form Finished.')
 
@@ -65,7 +64,6 @@ if 'xss' in opt.bug_type:
 elif 'sql' in opt.bug_type:
 
     Log.info('Starting SQL Get Form ......')
-    eng = engine(use_header)
     eng.startSQL_get_form(proxyType)
     Log.info('SQL Get Form Finished.')
 
@@ -80,7 +78,6 @@ elif 'sql' in opt.bug_type:
 
 else:
     Log.info('Starting LFI ......')
-    eng = engine(use_header)
     eng.startLFI(proxyType)
     Log.info('LFI Finished.')
 

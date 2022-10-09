@@ -211,23 +211,29 @@ class sql:
         new_query = "&".join(["{}{}".format(query, self.payload) for query in queries])
         parsed = parsed._replace(query=new_query)
         url = urlunparse(parsed)
+
         lock.acquire()
         Log.warning("Found link GET Method: " + url)
+        lock.release()
 
         # skip mailto and tel protocols
         if not url.startswith("mailto:") and not url.startswith("tel:"):
             try:
                 req = sess.get(url, verify=False)
                 if self.detect_sql_error(req.text):
+                    lock.acquire()
                     Log.high("Detected SQL (GET) at " + req.url)
+
                     file = open("sql_get_params.txt", "a+")
                     file.write(str(req.url) + "\n")
                     file.close()
                     lock.release()
 
                 else:
+                    lock.acquire()
                     Log.info(f"No bug here: {url}")
                     lock.release()
+                    
             except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError or urllib3.exceptions.ProtocolError:
                 self.sql_get_param(url)
         else:
@@ -251,9 +257,10 @@ class sql:
 
                 # check is that form using post method or not
                 if form["method"].lower().strip() == "post":
-
+                    lock.acquire()
                     Log.warning("Url using POST method SQL: " + url)
                     Log.info("getting fields ...")
+                    lock.release()
 
                     keys = {}
                     #print(form)
@@ -264,7 +271,9 @@ class sql:
                             # skip submit button and add default value of it
                             if 'type="submit"' in str(key) or "type='submit'" in str(key):
                                 if key["type"] == "submit":
+                                    lock.acquire()
                                     Log.info("Form key name: " + key["name"] + " value: " + "<Submit Confirm>")
+                                    lock.release()
                                     keys.update({key["name"]: key["value"]})
                                     continue
 
@@ -282,32 +291,45 @@ class sql:
                                         key['name']) or 'submit' in str(key['name']):
 
                                             keys.update({key["name"]: key["value"]})
+                                            lock.acquire()
                                             Log.info("Form key name: " + key["name"] + " value: " + key["value"])
+                                            lock.release()
 
                                     else:
+                                        lock.acquire()
                                         Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                        lock.release()
                                         keys.update({key["name"]: self.payload})
                                 except:
 
                                     # sending our payload instead normal data
+                                    lock.acquire()
                                     Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                    lock.release()
                                     keys.update({key["name"]: self.payload})
 
                         except Exception as e:
+                            lock.acquire()
                             Log.info("Internal error: " + str(e))
-
+                            lock.release()
+                    lock.acquire()
                     Log.info("Sending SQL payload (POST) method ..")
+                    lock.release()
                     req = sess.post(urljoin(url, action), data=keys)
 
                     # check response for sql injection error signs
                     if self.detect_sql_error(req.text):
+                        lock.acquire()
                         Log.high("Detected SQL (POST) at " + urljoin(url, action))
                         file = open("sql_post.txt", "a+")
                         file.write(str(urljoin(url, action)) + "\n" + str(keys) + '\n\n')
                         file.close()
                         Log.high("Post data: " + str(keys))
+                        lock.release()
                     else:
+                        lock.acquire()
                         Log.info("Page using POST method but SQL vulnerability not found")
+                        lock.release()
 
 
         except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError or urllib3.exceptions.ProtocolError:
@@ -334,9 +356,10 @@ class sql:
                     action = url
 
                 if form["method"].lower().strip() == "get":
-
+                    lock.acquire()
                     Log.warning("Url using GET method SQL: " + urljoin(url, action))
                     Log.info("Getting inputs ...")
+                    lock.release()
 
                     keys = {}
                     for key in form.find_all(["input", "textarea"]):
@@ -352,39 +375,52 @@ class sql:
                                     key['name']) or 'submit' in str(key['name']):
 
                                     keys.update({key["name"]: key["value"]})
+                                    lock.acquire()
                                     Log.info("Form key name: " + key["name"] + " value: " + key["value"])
+                                    lock.release()
 
 
                                 else:
-
+                                    lock.acquire()
                                     Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                    lock.release()
                                     keys.update({key["name"]: self.payload})
 
                             except:
 
                                 # sending our payload instead normal data
-
+                                lock.acquire()
                                 Log.info("Form key name: " + key["name"] + " value: " + self.payload)
+                                lock.release()
                                 keys.update({key["name"]: self.payload})
 
                         except Exception as e:
+                            lock.acquire()
                             Log.info("Internal error: " + str(e))
+                            lock.release()
                             try:
                                 keys.update({key["name"]: self.payload})
                             except KeyError as e:
+                                lock.acquire()
                                 Log.info("Internal error: " + str(e))
-
+                                lock.release()
+                    lock.acquire()
                     Log.info("Sending payload (GET) method...")
+                    lock.release()
 
                     req = sess.get(urljoin(url, action), params=keys)
                     if self.detect_sql_error(req.text):
+                        lock.acquire()
                         Log.high("Detected SQL (GET) at " + url)
                         file = open("sql_get.txt", "a+")
                         file.write(str(urljoin(url, action)) + "\n")
                         file.close()
                         Log.high("GET data: " + str(keys))
+                        lock.release()
                     else:
+                        lock.acquire()
                         Log.info("Page using GET_FORM method but SQL vulnerability not found")
+                        lock.release()
 
 
         except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError:

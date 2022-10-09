@@ -1,3 +1,4 @@
+from os import name, system
 import threading
 import utilities
 from lfi import lfi
@@ -34,6 +35,13 @@ class engine:
 
 
         """
+
+
+        if name == 'posix':
+            system('clear')
+        elif name in ('ce', 'nt', 'dos'):
+            system('cls')
+
         print(self.title)
         self.proxy_type = 0
         self.headers = ''

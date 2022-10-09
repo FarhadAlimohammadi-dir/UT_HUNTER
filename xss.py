@@ -11,7 +11,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
 
 disable_warnings(InsecureRequestWarning)
-lock = threading.Lock
+lock = threading.Lock()
 
 # Define XSS Class
 class xss:
@@ -50,11 +50,13 @@ class xss:
                 # Check each form if using GET mehtod or not
                 if form["method"].lower().strip() == "get":
 
-                    lock.acquire()
 
                     # Logging the URL and params in console ...
+
+                    lock.acquire()
                     Log.warning("Url using GET method XSS: " + urljoin(url, action))
                     Log.info("Getting inputs ...")
+                    lock.release()
 
                     keys = {}
                     for key in form.find_all(["input", "textarea"]):
@@ -70,35 +72,46 @@ class xss:
                                 keys.update({key["name"]: self.payload})
 
                         except Exception as e:
+                            lock.acquire()
                             Log.info("Internal error: " + str(e))
+                            lock.release()
                             try:
                                 keys.update({key["name"]: self.payload})
                             except KeyError as e:
+                                lock.acquire()
                                 Log.info("Internal error: " + str(e))
-
+                                lock.release()
+                    lock.acquire()
                     Log.info("Sending payload (GET) method...")
+                    lock.release()
 
                     # After put the payload in params, need to test the payload to see if we have the xss vuln or not
 
                     req = sess.get(urljoin(url, action), params=keys)
                     if self.payload in req.text:
+                        lock.acquire()
                         Log.high("Detected XSS (GET) at " + url)
+                        lock.release()
                         file = open("xss_get.txt", "a+")
                         file.write(str(urljoin(url, action)) + "\n\n")
                         file.close()
+
+                        lock.acquire()
                         Log.high("GET data: " + str(keys))
                         lock.release()
+
                     else:
+                        lock.acquire()
                         Log.info("Page using GET_FORM method but XSS vulnerability not found")
                         lock.release()
         except requests.exceptions.RequestException or requests.exceptions.ConnectionError or requests.exceptions.ProxyError:
+            lock.release()
             self.xss_get_form(url)
 
     def xss_get_param(self, url: str):
 
         try:
 
-            lock.acquire()
 
             # Checking websites get parameters not form ones, like search query in url
             # Example : Google.com/s=<Payload>
@@ -125,9 +138,9 @@ class xss:
             # turn replaced query to normal URL
             url = urlunparse(parsed)
 
-
-
+            lock.acquire()
             Log.warning("Found link GET Method: " + url)
+            lock.release()
 
             # Condition for checking is that mail link or telephone link
             # They are useless, so we need to skip it
@@ -139,15 +152,17 @@ class xss:
 
                 # Check if that website vulnerable or not
                 if self.payload in req.text:
+                    lock.acquire()
                     Log.high("Detected XSS (GET) at " + req.url)
+                    lock.release()
                     file = open("xss_get_params.txt", "a+")
                     url_decoded = unquote_plus(req.url)
 
                     file.write(url_decoded + "\n")
                     file.close()
-                    lock.release()
 
                 else:
+                    lock.acquire()
                     Log.info("Page using GET method but XSS vulnerability not found")
                     lock.release()
             else:
@@ -162,7 +177,6 @@ class xss:
 
         try:
             sess = self.sess()
-            lock.acquire()
 
             # First of all we need to send a get method for getting all inputs such as forms
             txt = sess.get(url).text
@@ -186,9 +200,10 @@ class xss:
                 # now time to see is that form using POST method for sending data`s or not
                 if form["method"].lower().strip() == "post":
 
+                    lock.acquire()
                     Log.warning("Url using POST method XSS: " + url)
                     Log.info("getting fields ...")
-
+                    lock.release()
                     ######################## Core-Input-START###############################
 
                     # Collecting all forms that have selection option (such as list or date picker)
@@ -246,7 +261,10 @@ class xss:
                             # use default submit value
 
                             if 'type="submit"' in str(key) or "type='submit'" in str(key):
+                                lock.acquire()
                                 Log.info("Form key name: " + key["name"] + " value: " + "<Submit Confirm>")
+                                lock.release()
+
                                 keys.update({key["name"]: key["value"]})
 
                             else:
@@ -260,37 +278,53 @@ class xss:
                                             key['name']) or 'token' in str(key['name']) or 'return' in str(
                                         key['name']) or 'submit' in str(key['name']):
                                         keys.update({key["name"]: key["value"]})
+
+                                        lock.acquire()
                                         Log.info("Form key name: " + key["name"] + " value: " + key["value"])
                                         lock.release()
 
                                     else:
+                                        lock.acquire()
                                         Log.info("Form key name: " + key["name"] + " value: " + self.payload)
-                                        keys.update({key["name"]: self.payload})
                                         lock.release()
+
+                                        keys.update({key["name"]: self.payload})
+
 
                                 except:
 
                                     # otherwise use payload in each field of form
-
+                                    lock.acquire()
                                     Log.info("Form key name: " + key["name"] + " value: " + self.payload)
-                                    keys.update({key["name"]: self.payload})
                                     lock.release()
 
+                                    keys.update({key["name"]: self.payload})
+
+
                         except Exception as e:
+
+                            lock.acquire()
                             Log.info("Internal error: " + str(e))
                             lock.release()
 
+                    lock.acquire()
                     Log.info("Sending XSS payload (POST) method ..")
+                    lock.release()
 
                     # Sending request with POST method
                     req = sess.post(urljoin(url, action), data=keys)
 
                     # Checking is that vulnerable or not
                     if self.payload in req.text or html.escape(self.payload) in req.text:
+                        lock.acquire()
                         Log.high("Detected XSS (POST) at " + urljoin(url, action))
+                        lock.release()
+
                         file = open("xss_post.txt", "a+")
                         file.write(str(urljoin(url, action)) + "\n" + str(keys) + '\n\n')
                         file.close()
+
+                        lock.acquire()
                         Log.high("Post data: " + str(keys))
                         lock.release()
 
@@ -299,14 +333,19 @@ class xss:
 
                         req2 = sess.get(req.url).text
                         if self.payload in req2 or html.escape(self.payload) in req2:
+                            lock.acquire()
                             Log.high("Detected XSS (POST) at " + urljoin(url, action))
+                            lock.release()
+
                             file = open("xss_post.txt", "a+", encoding='utf-8')
                             file.write(str(urljoin(url, action)) + "\n" + str(keys) + '\n\n')
                             file.close()
+
+                            lock.acquire()
                             Log.high("Post data: " + str(keys))
                             lock.release()
                         else:
-
+                            lock.acquire()
                             Log.info("Page using POST method but XSS vulnerability not found")
                             lock.release()
 

