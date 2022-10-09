@@ -66,6 +66,12 @@ in this case, you must put the proxies in proxy.txt file
  
  
  
+ 
+ ![image](https://user-images.githubusercontent.com/89252882/194757644-db1be6d3-cd2a-46e3-a8a4-32c386a8cacb.png)
+
+ 
+ 
+ 
 Todo:
 
 Parsing Mode  ✅
