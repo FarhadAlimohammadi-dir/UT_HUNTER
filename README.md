@@ -5,8 +5,11 @@ Most advanced XSS SQL LFI RCE vulnerabilities scanner in python (Multi-thread + 
 Todo:
 
 Parsing Mode
+
 Add HPP Tester
+
 Password Reset Bug Test
+
 ...
 
 
