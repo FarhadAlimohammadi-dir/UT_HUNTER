@@ -10,12 +10,17 @@ Most advanced XSS SQL LFI RCE vulnerabilities scanner in python (Multi-thread + 
 Parameters = -url , -proxy , -leecher_depth , -use_header , -bug_type
 
 [1] -url => required
+ 
 [2] -proxy => default is proxyless | if need use proxy, put proxies in proxies.txt and pass one of http socks4 socks5
+ 
 [3] -leecher_depth => default is 0 - for this you need to pur your custom urls in leechedUlrs.txt file | if needed to use leecher, pass an integer to set depth for leeching from your url
+ 
 [4] -use_header => default is no | if needed to use header, put headers as netscape format (google chrome inspector headers)
  in headers.txt and pass yes
+  
 [5]-bug_type => required and choices are [lfi,xss,sql]
 
+ 
 
 # Examples:
 
@@ -35,7 +40,7 @@ user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 ```
  
 4: uthunter.py -url=http://192.168.106.129/mutillidae/ -bug_type=sql -use_header=yes -proxy=http | in this case, you must put the proxies in proxy.txt file
-
+ 
 
 Todo:
 
