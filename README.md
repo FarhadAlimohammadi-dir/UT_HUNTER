@@ -48,7 +48,7 @@ in this case you need put headers (netscape format) in headers.txt file
 
 be aware you can use cookies as headers as well and here one example of headers:
 
-###Header Example
+# Header Example
 ```text
 cookie: prov=c372e5d6-a595-a7c1-a96f-63a7f2e02622; notice-ssb=1%3B1662829767740
 referer: https://www.google.com/
